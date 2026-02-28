@@ -1,4 +1,4 @@
-from db_service import DBService
+from src.db_service import DBService
 from sql_queries import SQLQueries
 from utils import Utils
 

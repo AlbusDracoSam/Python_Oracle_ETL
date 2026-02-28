@@ -1,7 +1,7 @@
 import os
 import pandas as pd
-from sql_queries import SQLQueries
-from db_service import DBService
+from src.sql_queries import SQLQueries
+from src.db_service import DBService
 
 sql_queries = SQLQueries()
 db = DBService()
@@ -11,7 +11,7 @@ class Utils:
     def read_employees_csv(self):
         try:
             file_dir = os.path.dirname(__file__)
-            file_path = os.path.join(file_dir, "Employees_table.csv")
+            file_path = os.path.join(file_dir, "resources/Employees_table.csv")
             df = pd.read_csv(file_path)
             return df
         except Exception as e:

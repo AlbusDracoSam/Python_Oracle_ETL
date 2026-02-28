@@ -11,7 +11,7 @@ class DBService:
 
     def fetch_creds(self):
         file_dir = os.path.dirname(__file__)
-        file_path = os.path.join(file_dir, "db_config.json")
+        file_path = os.path.join(file_dir, "resources/db_config.json")
         try:
             with open(file_path) as f:
                 db_config = json.load(f)
