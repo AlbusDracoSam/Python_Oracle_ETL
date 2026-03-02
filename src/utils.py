@@ -52,6 +52,17 @@ class Utils:
             print("Error while inserting employee")
             raise e
 
+    def insert_employee_batch_with_quarantine(self, conn, df, query):
+        try:
+            inserted = db.exec_batch_with_quarantine(conn, df, query)
+            expected = len(df)
+            if inserted != expected:
+                raise RuntimeError(f"Partial data inserted. Expected={expected}, inserted={inserted}")
+            print(f"Successfully inserted {inserted} employees")
+        except Exception as e:
+            print("Error while inserting employee")
+            raise e
+
     def validate_schema(self, df):
 
         try:

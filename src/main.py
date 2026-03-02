@@ -9,12 +9,17 @@ def main():
     utils = Utils()
     try:
         conn = db.connect()
-        create_query = sql_queries.create_table_query()
-        result = db.exec_query(conn, create_query)
+        create_table_query = sql_queries.create_table_query()
+        result = db.exec_query(conn, create_table_query)
+        create_quarantine_query = sql_queries.create_quarantined_table_query()
+        result = db.exec_query(conn, create_quarantine_query)
+        result = db.exec_query(conn, create_table_query)
         df = utils.read_employees_csv()
         insert_query = sql_queries.insert_employee_query()
         utils.insert_employee_row_by_row(df, insert_query) #Insert data row by row
         utils.insert_employee_batch(conn, df, insert_query) #Insert in batch (whole)
+        utils.insert_employee_batch_with_quarantine(conn, df, insert_query) # Insert with quarantine
+
 
 
     except Exception as e:

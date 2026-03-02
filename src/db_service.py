@@ -74,4 +74,45 @@ class DBService:
             print(f"Connection has failed. {e}")
             raise e
 
+    def exec_batch_with_quarantine(self, conn, df, query):
+        if conn is None:
+            conn = self.connect()
+        try:
+            inserted_count = 0
+            cursor = conn.cursor()
+            data = df.to_dict(orient="records")
+            cursor.executemany(query, data, batcherrors=True)
+            errors = cursor.getbatcherrors()
+            if errors:
+                print(f"Batch inserted into DB with errors: {errors}")
+                quarantined_rows = self.quarantine_batch(errors, df)
+                quarantine_query = sql_queries.insert_quarantined_query()
+                cursor.executemany(quarantine_query, quarantined_rows)
+            conn.commit()
+            print("Batch inserted into DB")
+            conn.commit()
+            print("Batch inserted into DB")
+            return cursor.rowcount
+        except oracledb.Error as e:
+            print(f"Connection has failed. {e}")
+            raise e
+
+    def quarantine_batch(self, errors, df):
+        try:
+            quarantine_rows = []
+            for err in errors:
+                row = df.iloc[err.offset]
+                quarantine_rows.append({
+                    "emp_id": int(row.emp_id),
+                    "emp_name": str(row.emp_name),
+                    "salary": float(row.salary),
+                    "dept_id": int(row.dept_id),
+                    "age": int(row.age),
+                    "error_msg": str(err.message)
+                })
+            return quarantine_rows
+        except Exception as e:
+            print("Error while processing quarantine")
+            raise
+
 
