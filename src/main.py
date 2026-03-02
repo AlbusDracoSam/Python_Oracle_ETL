@@ -3,21 +3,24 @@ from sql_queries import SQLQueries
 from utils import Utils
 
 def main():
+    conn = None
     db = DBService()
     sql_queries = SQLQueries()
     utils = Utils()
     try:
-        db.connect()
+        conn = db.connect()
         create_query = sql_queries.create_table_query()
-        result = db.exec_query(create_query)
+        result = db.exec_query(conn, create_query)
         df = utils.read_employees_csv()
         insert_query = sql_queries.insert_employee_query()
-        utils.insert_employee(df, insert_query)
+        utils.insert_employee_row_by_row(df, insert_query) #Insert data row by row
+        utils.insert_employee_batch(conn, df, insert_query) #Insert in batch (whole)
+
 
     except Exception as e:
         print(e)
     finally:
-        db.disconnect()
+        db.disconnect(conn)
 
 
 # Press the green button in the gutter to run the script.

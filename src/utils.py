@@ -6,6 +6,16 @@ from src.db_service import DBService
 sql_queries = SQLQueries()
 db = DBService()
 
+EXPECTED_SCHEMA ={
+    "emp_id": int,
+    "emp_name": str,
+    "salary": float,
+    "dept_id": int,
+    "age": int,
+}
+
+NOT_NULL_COLUMNS = {"emp_id", "emp_name", "salary", "dept_id", "age"}
+
 class Utils:
 
     def read_employees_csv(self):
@@ -18,7 +28,7 @@ class Utils:
             print("Error while reading employees csv")
             raise e
 
-    def insert_employee(self, df, query):
+    def insert_employee_row_by_row(self, df, query):
         try:
             for _, row in df.iterrows():
                 print(query)
@@ -29,3 +39,48 @@ class Utils:
         except Exception as e:
             print("Error while inserting employee")
             raise e
+
+    def insert_employee_batch(self, conn, df, query):
+        try:
+            df = self.validate_schema(df)
+            inserted = db.exec_batch(conn, query, df)
+            expected = len(df)
+            if inserted != expected:
+                raise RuntimeError(f"Partial data inserted. Expected={expected}, inserted={inserted}")
+            print(f"Successfully inserted {inserted} employees")
+        except Exception as e:
+            print("Error while inserting employee")
+            raise e
+
+    def validate_schema(self, df):
+
+        try:
+        # 1. Check missing columns
+            missing = set(EXPECTED_SCHEMA.keys()) - set(df.columns)
+            if missing:
+                raise RuntimeError(f"Missing Columns: {missing}")
+
+            # 2. Check nulls
+            nulls = [c for c in NOT_NULL_COLUMNS if df[c].isnull().any()]
+            if nulls:
+                raise ValueError(f"Null values found in NOT NULL columns : {nulls}")
+
+            # 3. Type validation
+            for col, expected_type in EXPECTED_SCHEMA.items():
+                try:
+                    df[col] = df[col].astype(expected_type)
+                except Exception as e:
+                    raise TypeError(f"Error while converting {col} to type {expected_type}")
+
+            # 4. Business rules
+            if (df['age'] < 18).any():
+                raise ValueError(f"Age must be less than or equal to 18")
+
+            print("Successfully validated schema")
+            return df
+        except Exception as e:
+            print("Error while validating schema")
+            raise e
+
+
+

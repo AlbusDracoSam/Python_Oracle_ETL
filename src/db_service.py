@@ -30,32 +30,48 @@ class DBService:
                 with self.conn.cursor() as cur:
                     cur.execute("SELECT 1 FROM dual")
                     print(f"Connected to DB")
+                return self.conn
             except oracledb.Error as e:
                 print(f"Connection has failed. {e}")
                 raise e
+        return None
 
-    def exec_query(self, query, params = None):
-        if self.conn is None:
+    def exec_query(self, conn, query, params = None):
+        if conn is None:
             self.connect()
         try:
-            cursor = self.conn.cursor()
+            cursor = conn.cursor()
             cursor.execute(query, params or {})
             if cursor.description is not None:
                 return cursor.fetchall()
-            self.conn.commit()
+            conn.commit()
             return cursor.rowcount
         except oracledb.Error as e:
             print(f"Connection has failed. {e}")
             raise e
 
-    def disconnect(self):
-        if self.conn:
+    def disconnect(self, conn):
+        if conn:
             try:
-                self.conn.close()
+                conn.close()
                 print(f"Disconnected from DB")
             except oracledb.Error as e:
                 print(f"Disconnection has failed. {e}")
             finally:
-                self.conn = None
+                conn = None
+
+    def exec_batch(self, conn, query, df):
+        if conn is None:
+            conn = self.connect()
+        try:
+            cursor = conn.cursor()
+            data = df.to_dict(orient="records")
+            cursor.executemany(query, data)
+            conn.commit()
+            print("Batch inserted into DB")
+            return cursor.rowcount
+        except oracledb.Error as e:
+            print(f"Connection has failed. {e}")
+            raise e
 
 
